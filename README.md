@@ -4,6 +4,7 @@ A sleek and modern Android Weather App built using **Jetpack Compose** and **Kot
 
 ## 📱 Features
 
+- 🔐 Firebase Authentication (Email/Password)
 - 🔍 Search and display weather by city
 - 📍 Location name and country display
 - 🌡️ Current temperature with weather icon
@@ -19,6 +20,7 @@ A sleek and modern Android Weather App built using **Jetpack Compose** and **Kot
 - **MVVM Architecture**
 - **Coil** – Image loading
 - **Retrofit** – Network calls
+- **Firebase Authentication – User login & signup**
 - **ViewModel + LiveData/State**
 
 ## 📸 Screenshots
