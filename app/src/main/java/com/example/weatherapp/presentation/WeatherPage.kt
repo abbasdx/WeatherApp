@@ -1,7 +1,5 @@
 package com.example.weatherapp.presentation
 
-import android.R
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,11 +10,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -31,21 +29,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.weatherapp.api.NetworkResponse
 import com.example.weatherapp.api.WeatherModel
 import com.example.weatherapp.viewmodel.AuthViewModel
 import com.example.weatherapp.viewmodel.WeatherViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun WeatherPage(
@@ -58,17 +55,20 @@ fun WeatherPage(
         mutableStateOf("")
     }
 
+
     val weatherResult = viewModel.weatherResult.observeAsState()
 
     Column(
-        modifier = Modifier.padding(10.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .padding(top = 25.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = {
@@ -80,27 +80,25 @@ fun WeatherPage(
                 AsyncImage(
                     model = "https://toppng.com/uploads/preview/logout-icon-png-transparent-login-logout-icon-11562923416nzkie6fbka.png",
                     contentDescription = "logout image",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(30.dp)
                 )
             }
-//            OutlinedTextField(
-//                value = city, onValueChange = {
-//                    city = it
-//                },
-//                label = {
-//                    Text(text = "Search City")
-//                },
-//                modifier = Modifier.clip(RoundedCornerShape(40.dp)), // ✅ Correct usage
-//                trailingIcon = {
-//                    Button(onClick = {
-//                        viewModel.getData(city)
-//                    }) {
-//                        Icon(imageVector = Icons.Default.Search, contentDescription = "")
-//                    }
-//                }
-//            )
+//            Column {
+//                Text(
+//                    text = "Welcome home,",
+//                    color = secondaryTextColor,
+//                    fontSize = 10.sp
+//                )
+//                Text(
+//                    text = "Abbas",
+//                    color = secondaryTextColor,
+//                    fontSize = 20.sp
+//                )
+//            }
 
-            OutlinedTextField(value = city,
+
+            OutlinedTextField(
+                value = city,
                 singleLine = true,
                 shape = RoundedCornerShape(30.dp),
                 label = { Text(text = "Search City") },
@@ -122,6 +120,7 @@ fun WeatherPage(
             )
 //
         }
+
 
         when (val result = weatherResult.value) {
             is NetworkResponse.Loading -> {
@@ -146,12 +145,22 @@ fun WeatherPage(
 
 @Composable
 fun WeatherDetails(data: WeatherModel) {
+
+    val originalDate = data.location.localtime?.split(" ")?.get(0) // e.g. "2025-08-04"
+    val formattedDate = if (originalDate != null) {
+        val parsedDate = LocalDate.parse(originalDate)
+        parsedDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH))
+    } else {
+        ""
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,
@@ -166,28 +175,63 @@ fun WeatherDetails(data: WeatherModel) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = data.location.country.toString(), fontSize = 18.sp, color = Color.Gray)
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(),
+            shape = RoundedCornerShape(45.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    WeatherKeyVal("Local Date", formattedDate)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = " ${data.current.temp_c}°C",
+                        fontSize = 56.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = Color.DarkGray
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.wrapContentHeight()
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.size(120.dp), // Reduced size for better proximity
+                        model = "https:${data.current.condition?.icon}".replace("64x64", "128x128"),
+                        contentDescription = "Condition icon"
+                    )
+                    Spacer(modifier = Modifier.height(4.dp)) // Smaller gap
+                    Text(
+                        text = data.current.condition?.text.orEmpty(),
+                        fontSize = 25.sp, // Slightly smaller to match the icon
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray
+                    )
+                }
+
+
+            }
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = " ${data.current.temp_c} ° c",
-            fontSize = 56.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-
-        AsyncImage(
-            modifier = Modifier.size(160.dp),
-            model = "https:${data.current.condition?.icon}".replace("64x64", "128x128"),
-            contentDescription = "Condition icon"
-        )
-        Text(
-            text = data.current.condition?.text.toString(),
-            fontSize = 20.sp,
-            textAlign = TextAlign.Center,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Card {
+        Card(
+            shape = RoundedCornerShape(45.dp)
+        ) {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -226,7 +270,7 @@ fun WeatherKeyVal(key: String, value: String) {
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
         Text(text = key, fontWeight = FontWeight.SemiBold, color = Color.Gray)
     }
 }
